@@ -1,5 +1,5 @@
  
-const dataResourceSchema = new Schema({
+const dataSourceSchema = new Schema({
   data_resource_name: {
     type: String,
     required: true, 
