@@ -213,7 +213,14 @@ const projectSchema = {
     type: String,
     required: true,
   },
-
+  in_qa_pool:{
+    type: String,
+    default: false
+  },
+  in_annotation_pool:{
+    type: String,
+    default: false
+  },
   created_by: {
     type: String,
     required: true,
