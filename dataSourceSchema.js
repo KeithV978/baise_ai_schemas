@@ -16,6 +16,13 @@ const dataSourceSchema = new Schema({
     type: String,
     required: true, 
   },
+  is_bucke: {
+    type: String,
+    required: true, 
+  },
+  file_source_type: {
+    type: String,  
+  },
   is_selected_for_project: {
     type: Boolean,
     default: false,
