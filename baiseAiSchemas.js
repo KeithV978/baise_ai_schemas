@@ -1,309 +1,354 @@
-const dataResourceSchema = {
-  data_resource_name: {
-    type: String,
-    required: true,
-  },
-  storage_type: {
-    type: String,
-    enum: ["database", "storage bucket"],
-    required: true,
-  },
-  storage_location: {
-    type: String,
-    required: true,
-  },
-  connection_string: {
-    type: String,
-    required: true,
-  },
-  is_valid: {
-    type: Boolean,
-    default: false,
-    required: true,
-  },
-  is_selected_for_project: {
-    type: Boolean,
-    default: false,
-    required: true,
-  },
-  data_resource_description: {
-    type: String,
-    required: true,
-  },
-  created_by_email: {
-    type: String,
-    required: true,
-  },
-  updated_by_email: {
-    type: String,
-  },
-  created_at: {
-    type: Date,
-    default: Date.now,
-  },
-  updated_at: {
-    type: Date,
-    default: Date.now,
-  },
-};
-
-const projectSchema = {
-  project_name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  project_description: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  project_start_date: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-  project_start_date_timestamp: {
-    type: String,
-    default: Date.now,
-    required: true,
-  },
-  origin_data_source: {
-    origin_data_source_type: {
-      type: String,
-      enum: ["File Upload", "File Storage", "Database"],
-      required: true,
-    },
-    origin_file_upload_detaiils: {
-      storage_url:{
-        type: String,
-      }
-  },
-  origin_file_storage_details: {
-    origin_file_source_type:{
-      type: String,
-      enum: ["Link to bucket", "Existing data source"],
-      required: true,
-    },
-    origin_file_source: {
-      type: String,
-      required: true,
-    },
-  },
+// Data Resource Schema
+const dataResourceSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  dataResourceName: { type: String, required: true },
+  storageType: { type: String, enum: ["database", "storage bucket"], required: true },
   
-  origin_file_storage_details: {
-    origin_database_data_source_id: {
-      type: String,
-      required: true,
-    },
-    origin_database: {
-      type: String,
-    },
-    origin_database_table: {
-      type: String,
-    },
-  },
-},
-  treat_as: {
-    type: String,
-    enum: ["single", "multi"],
-    default: "single",
-  },
-  annotation_details: {
-    annotation_type_category: {
-      type: String,
-      required: true,
-    },
-    annotation_type: {
-      type: String,
-      required: true,
-    },
-    is_annotation_column_free_text: {
-      type: Boolean,
-      required: true,
-    },
-    annotation_column: {
-      type: String,
-      required: true,
-    },
-    labels: {
-      type: Array,
-      required: true,
-    },
-  },
-  destination_data_source_details:{
+  // database structure
+  storageLocation: String,
+  connectionString: String,
+  
+  // Google Cloud storage bucket structure
+  storageBucketName: String,
+  cloudProjectId: String,
+  privateKeyId: String,
+  privateKey: String,
+  certUrl: String,
+  
+  // Azure Blob storage structure
+  storageAccountKey: String,
+  blobSasUrl: String,
+  containerName: String,
+  
+  // AWS S3 storage structure
+  awsKeyId: String,
+  awsSecretAccessKey: String,
+  awsRegion: String,
+  bucketName: String,
+  
+  isActive: { type: Boolean, default: true },
+  dataResourceDescription: String,
+  customerEmail: String,
+  customerId: String,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
 
-    has_destination_storage_location: {
-      type: Boolean,
-      required: true,
+// Project Schema
+const projectSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  projectName: { type: String, required: true },
+  projectDescription: String,
+  projectStartDate: String,
+  projectStartDateTimestamp: Number,
+  originDataSource: {
+    sourceType: { type: String, enum: ["file upload", "file storage", "database"] },
+    
+    // File Upload structure
+    fileUploadDetails: [{
+      _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+      fileStorageUrl: String,
+      fileStorageKey: String,
+      uploadDate: String,
+      filename: String,
+      isAddedToTask: Boolean
+    }],
+    
+    // File Storage structure
+    storageDetails: {
+      sourceType: { type: String, enum: ["link to bucket", "existing data source"] },
+      // Link to bucket structure
+      bucketLink: String,
+      // Existing data source structure
+      dataResourceId: { type: mongoose.Schema.Types.ObjectId, ref: 'DataResource' }
     },
-  destination_data_export_format: {
-    type: String,
-    required: true,
+    
+    databaseDetails: {
+      dataResourceId: { type: mongoose.Schema.Types.ObjectId, ref: 'DataResource' },
+      nameOfCollection: String,
+      groupByColumn: String
+    }
   },
-  destination_data_source_id: {
-    type: Schema.Types.ObjectId,
-    ref: "dataSource",
-    required: true,
+  isMultipleTasks: Boolean,
+  annotationCategoryType: String,
+  annotationType: String,
+  isAnnotationColumnFreeText: Boolean,
+  annotationColumn: String,
+  labels: [String],
+  destinationDataSourceDetails: {
+    hasDestinationStorageLocation: Boolean,
+    // has_destination_storage_location: YES
+    dataResourceId: { type: mongoose.Schema.Types.ObjectId, ref: 'DataResource' },
+    dataResourceStorageType: String,
+    // has_destination_storage_location: NO
+    exportFormat: String
   },
-},
-  labelling_metrics: {
-    time_taken_per_task_in_minutes: {
-      type: Number,
-      default: 1,
-      reqired: true,
-    },
-    number_of_annotators: {
-      type: Number,
-      default: 1,
-      reqired: true,
-    },
-    number_of_qa_testers: {
-      type: Number,
-      default: 1,
-      reqired: true,
-    },
+  labellingMetrics: {
+    timeTakenPerTaskInMinutes: Number,
+    numberOfAnnotators: Number,
+    numberOfQaReviewers: Number
   },
-  estimated_completion_time_in_minutes: {
-    type: Number,
-    default: 0,
-    required: true,
-  },
-  estimated_price: {
-    type: Number,
-    default: 0,
-    required: true,
-  },
-  destination_data_source_storage_type: {
-    type: String,
-    required: true,
-  },
-  training_materials: [
-    {
-      material_type: {
-        type: String,
-        enum: ["file", "link"],
-        required: true,
-      },
-      material_name: {
-        type: String,
-        required: true,
-      },
-      material_key: {
-        type: String,
-        required: true,
-      },
-      material_url: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
-  project_questionnaire: {
-    type: Schema.Types.ObjectId,
-    ref: "questionnaireSchema",
-    required: true,
-  },
-  tasks_lists: {
-    type: Array,
-    ref: "tasksList",
-    required: true,
-  },
-  annotation_task_id: {
-    type: String,
-    required: true,
-  },
-  in_qa_pool:{
-    type: String,
-    default: false
-  },
-  in_annotation_pool:{
-    type: String,
-    default: false
-  },
-  created_by: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-};
+  estimatedCompletionTimeInMinutes: Number,
+  estimatedPrice: Number,
+  projectQuestionnaireId: { type: mongoose.Schema.Types.ObjectId, ref: 'Questionnaire' },
+  labelStudioProjectId: String,
+  createdByEmail: String,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
 
-const taskSchema = {
-  customer_review_status: {
-    type: String,
-  },
-  is_being_annotated: {
-    type: Boolean,
-    default: false,
-    required: true,
-  },
-  annotator_id: {
-    type: String,
-    required: true,
-  },
-  annotation_timestamp: {
-    type: String,
-    required: true,
-  },
-  qa_id: {
-    type: String,
-    required: true,
-  },
-  is_being_qa_reviewed: {
-    type: Boolean,
-    default: false,
-    required: true,
-  },
-  qa_timestamp: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-};
+// Training Materials Schema
+const trainingMaterialsSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true },
+  materialType: { type: String, enum: ["file", "link"], required: true },
+  // file
+  fileUploadUrl: String,
+  fileKey: String,
+  // link
+  materialName: String,
+  materialUrl: String,
+  
+  createdByEmail: String,
+  updated_by_email: String,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
 
-const questionnaireSchema = {
-  project_id: {
-    type: Schema.Types.ObjectId,
-    ref: "projectSchema",
+// Questionnaire Schema
+const questionnaireSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  requiredPersonnels: [{ type: String, enum: ["qa", "annotator"] }],
+  passScore: Number,
+  retakesLimit: Number,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// Questionnaire Questions Schema
+const questionnaireQuestionsSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  questionnaireId: { type: mongoose.Schema.Types.ObjectId, ref: 'Questionnaire', required: true },
+  questionSerialNumber: Number,
+  question: String,
+  correctOption: [String],
+  questionOptions: [String],
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// Questionnaire Result Schema
+const questionnaireResultSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  questionnaireId: { type: mongoose.Schema.Types.ObjectId, ref: 'Questionnaire' },
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  personnelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Personnel' },
+  personnelRole: String,
+  personnelEmail: String,
+  percentageScore: Number,
+  status: { type: String, enum: ["passed", "failed"] },
+  questionnaireCompletionTimestamp: Number
+});
+
+// BAISE AI QA Testers Schema
+const baiseAiQaTestersSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  firstName: String,
+  lastName: String,
+  email: { type: String, required: true, unique: true },
+  sex: String,
+  bio: String,
+  dateOfBirth: Date,
+  profileImageUrl: String,
+  employmentStatus: { type: String, enum: ["active", "suspended", "deactivated"], default: "active" },
+  educationalQualification: String,
+  numberOfStrikes: { type: Number, default: 0 },
+  postalAddress: String,
+  address: String,
+  country: String,
+  city: String,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// BAISE AI Annotators Schema
+const baiseAiAnnotatorsSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  firstName: String,
+  lastName: String,
+  email: { type: String, required: true, unique: true },
+  sex: String,
+  bio: String,
+  dateOfBirth: Date,
+  profileImageUrl: String,
+  employmentStatus: { type: String, enum: ["active", "suspended", "deactivated"], default: "active" },
+  educationalQualification: String,
+  address: String,
+  postalAddress: String,
+  country: String,
+  city: String,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// Resume Metadata Schema
+const resumeMetadataSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  personnelId: { type: mongoose.Schema.Types.ObjectId, refPath: 'personnelModel' },
+  personnelModel: { type: String, enum: ['QaTester', 'Annotator'] },
+  documentName: String,
+  fileType: String,
+  fileSise: String, // Note: There's a typo in the original "fileSise"
+  uploadedTimestamp: Number,
+  documentLocationUrl: String,
+  documentUploadKey: String
+});
+
+// Customer Schema
+const customerSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  customerName: String,
+  email: { type: String, required: true, unique: true },
+  profileImageUrl: String,
+  phoneNumber: String,
+  address: {
+    country: String,
+    state: String,
+    zipCode: Number,
+    street: String,
+    streetNumber: Number
   },
-  question_serial_number: {
-    type: Number,
+  projectsId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
+  paymentsId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// QA Testers Projects Schema
+const qaTestersProjectsSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  staffEmail: String,
+  staffId: { type: mongoose.Schema.Types.ObjectId, ref: 'QaTester' },
+  projectName: String,
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  numberOfStrikes: { type: Number, default: 0 },
+  numberOfLabelledDatasets: { type: Number, default: 0 },
+  averageAnnotationsPerMinutes: Number,
+  reviewTime: Number,
+  projectStartTimestamp: Number,
+  terminatedTimestamp: Number,
+  completionTimestamp: Number,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// Annotators Projects Schema
+const annotatorsProjectsSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  staffEmail: String,
+  staffId: { type: mongoose.Schema.Types.ObjectId, ref: 'Annotator' },
+  projectName: String,
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  numberOfStrikes: { type: Number, default: 0 },
+  numberOfLabelledDatasets: { type: Number, default: 0 },
+  averageAnnotationsPerMinutes: Number,
+  projectStartTimestamp: Number,
+  terminatedTimestamp: Number,
+  completionTimestamp: Number,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// Tasks Schema
+const tasksSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  labelStudioTaskId: String,
+  taskType: { type: String, enum: ["annotation", "qa review"] },
+  taskTypeCategory: { type: String, enum: ["text", "image", "video", "audio"] },
+  taskTypeSubcategory: { 
+    type: String, 
+    enum: [
+      "text classification", 
+      "text generation", 
+      "image classification", 
+      "image segmentation", 
+      "video classification", 
+      "audio classification"
+    ] 
   },
-  question: {
-    type: String,
+  taskStatus: { 
+    type: String, 
+    enum: ["in progress", "qa review", "customer review", "completed"],
+    default: "in progress"
   },
-  qustion_options: [
-    {
-      option: {
-        type: String,
-      },
-    },
-  ],
-  correct_option: {
-    type: String,
-  },
-  for_annotator: {
-    type: Boolean,
-  },
-  for_qa: {
-    type: Boolean,
-  },
-};
+  taskCreationTimestamp: { type: Number, default: Date.now },
+  isAnnotated: { type: Boolean, default: false },
+  annotatorCompletionTimestamp: Number,
+  isQaReviewed: { type: Boolean, default: false },
+  qaReviewCompletionTimestamp: Number,
+  annotatorEmail: String,
+  annotatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Annotator' },
+  qaTesterEmail: String,
+  qaTesterrId: { type: mongoose.Schema.Types.ObjectId, ref: 'QaTester' },
+  annotationStartTimestamp: Number,
+  annotationEndTimestamp: Number,
+  annotationDuration: Number,
+  qaStartTimestamp: Number,
+  qaEndTimestamp: Number,
+  qaReviewDuration: Number,
+  customerEmail: String,
+  customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
+  customerReviewStatus: String,
+  customerReviewTimestamp: Number,
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now }
+});
+
+// Batch Schema
+const batchSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  batchNumber: Number,
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
+  isUploaded: { type: Boolean, default: false },
+  status: { type: String, enum: ["pending upload", "batch uploaded"], default: "pending upload" },
+  qaTesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'QaTester' },
+  creationTimestamp: { type: Number, default: Date.now },
+  updatedTimestamp: { type: Number, default: Date.now },
+  taskIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }]
+});
+
+// Payments Schema
+const paymentsSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
+  customerEmail: String,
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  paymentDescription: String,
+  paymentMethod: String,
+  status: String,
+  paymentAmount: Number,
+  inhouzPaymentId: String,
+  stripeIntentId: String,
+  transactionId: String,
+  extraFees: Number,
+  paymentTotalAmount: Number,
+  paymentCurrency: String,
+  paymentTimestamp: Number
+});
+
+// Personnel Payout Schema
+const personnelPayoutSchema = new mongoose.Schema({
+  _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  personnelId: { type: mongoose.Schema.Types.ObjectId, refPath: 'personnelModel' },
+  personnelModel: { type: String, enum: ['QaTester', 'Annotator'] },
+  projectName: String,
+  projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
+  numberOfAnnotatedTasks: Number,
+  hoursWorked: Number,
+  amountPaid: Number,
+  status: String
+});
+ 
